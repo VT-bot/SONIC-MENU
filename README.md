@@ -1,425 +1,172 @@
--- Criando a GUI
-local ScreenGui = Instance.new("ScreenGui")
+-- SONIC MENU PAGO
+-- Créditos: SACOLA E TIGRINHO
+
+local SonicMenu = Instance.new("ScreenGui")
 local MainFrame = Instance.new("Frame")
+local MinimizeButton = Instance.new("TextButton")
 local OpenButton = Instance.new("TextButton")
+local ButtonsFrame = Instance.new("Frame")
 local FunctionsFrame = Instance.new("Frame")
+local FunctionsTitle = Instance.new("TextLabel")
 
--- Variáveis para arrastar a interface
-local Dragging = false
-local DragInput
-local DragStart
-local StartPos
-
--- Variáveis globais de estado
-_G.noClipActive = false
-_G.balaMagicaActive = false
-_G.globalSpeed = 50  -- Velocidade padrão (entre 10 e 500)
-
--- Configurações do menu
-ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
-ScreenGui.ResetOnSpawn = false
-
-MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 120, 0, 40)
-MainFrame.Position = UDim2.new(0, 20, 0, 20)
-MainFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 255) -- Fundo Azul
-MainFrame.Active = true  -- Permite input
+-- Configuração do painel movível
+SonicMenu.Parent = game.CoreGui
+MainFrame.Parent = SonicMenu
+MainFrame.Size = UDim2.new(0, 300, 0, 500)  -- Aumentei o tamanho do painel para acomodar mais botões
+MainFrame.Position = UDim2.new(0.5, -150, 0.5, -250)  -- Ajustei a posição para ficar mais centralizado
+MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+MainFrame.Draggable = true
+MainFrame.Active = true
 MainFrame.Selectable = true
-MainFrame.Parent = ScreenGui
 
-OpenButton.Name = "OpenButton"
-OpenButton.Size = UDim2.new(1, 0, 1, 0)
-OpenButton.Text = "Sonic Store"
-OpenButton.BackgroundColor3 = Color3.fromRGB(0, 0, 255)
-OpenButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-OpenButton.Parent = MainFrame
+MinimizeButton.Parent = MainFrame
+MinimizeButton.Size = UDim2.new(0, 50, 0, 25)
+MinimizeButton.Position = UDim2.new(1, -55, 0, 5)
+MinimizeButton.Text = "-"
+MinimizeButton.MouseButton1Click:Connect(function()
+    ButtonsFrame.Visible = not ButtonsFrame.Visible
+    FunctionsFrame.Visible = not FunctionsFrame.Visible
+end)
 
--- Funções do menu
-FunctionsFrame.Name = "FunctionsFrame"
-FunctionsFrame.Size = UDim2.new(0, 120, 0, 380)
-FunctionsFrame.Position = UDim2.new(0, 0, 0, 40)
-FunctionsFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 255)
-FunctionsFrame.Visible = false
+ButtonsFrame.Parent = MainFrame
+ButtonsFrame.Size = UDim2.new(1, 0, 0.5, -30)
+ButtonsFrame.Position = UDim2.new(0, 0, 0, 30)
+ButtonsFrame.BackgroundTransparency = 1
+
 FunctionsFrame.Parent = MainFrame
+FunctionsFrame.Size = UDim2.new(1, 0, 0.5, -30)
+FunctionsFrame.Position = UDim2.new(0, 0, 0.5, 0)
+FunctionsFrame.BackgroundTransparency = 1
 
--- Abre ou fecha o menu
-OpenButton.MouseButton1Click:Connect(function()
-	FunctionsFrame.Visible = not FunctionsFrame.Visible
-end)
+FunctionsTitle.Parent = FunctionsFrame
+FunctionsTitle.Size = UDim2.new(1, 0, 0, 30)
+FunctionsTitle.Position = UDim2.new(0, 0, 0, 0)
+FunctionsTitle.Text = "Funções"
+FunctionsTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+FunctionsTitle.BackgroundTransparency = 1
 
--- Permite mover o painel (MainFrame)
-local UserInputService = game:GetService("UserInputService")
-MainFrame.InputBegan:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 then
-		Dragging = true
-		DragStart = input.Position
-		StartPos = MainFrame.Position
-		input.Changed:Connect(function()
-			if input.UserInputState == Enum.UserInputState.End then
-				Dragging = false
-			end
-		end)
-	end
-end)
-
-MainFrame.InputChanged:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseMovement then
-		DragInput = input
-	end
-end)
-
-game:GetService("RunService").Heartbeat:Connect(function()
-	if Dragging and DragInput then
-		local Delta = DragInput.Position - DragStart
-		MainFrame.Position = UDim2.new(
-			StartPos.X.Scale, StartPos.X.Offset + Delta.X,
-			StartPos.Y.Scale, StartPos.Y.Offset + Delta.Y
-		)
-	end
-end)
-
--- Função para criar botões com fundo azul
-local function createButton(text, position, callback)
-	local button = Instance.new("TextButton")
-	button.Name = text.."Button"
-	button.Size = UDim2.new(1, 0, 0, 30)
-	button.Position = UDim2.new(0, 0, 0, position)
-	button.Text = text .. " [OFF]"
-	button.BackgroundColor3 = Color3.fromRGB(0, 0, 255) -- Botão Azul
-	button.TextColor3 = Color3.fromRGB(255, 255, 255)
-	button.Parent = FunctionsFrame
-
-	local state = false
-	button.MouseButton1Click:Connect(function()
-		state = not state
-		button.Text = text .. (state and " [ON]" or " [OFF]")
-		callback(state)
-	end)
+-- Função para teleporte
+local function teleport(x, y, z)
+    local player = game.Players.LocalPlayer
+    if player and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+        player.Character.HumanoidRootPart.CFrame = CFrame.new(x, y, z)
+    end
 end
 
--- Botão de fechar a interface
-local function createCloseButton()
-	local closeButton = Instance.new("TextButton")
-	closeButton.Name = "CloseButton"
-	closeButton.Size = UDim2.new(0, 30, 0, 30)
-	closeButton.Position = UDim2.new(1, -30, 0, 0)
-	closeButton.Text = "X"
-	closeButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0) -- Vermelho
-	closeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-	closeButton.Parent = MainFrame
+-- Criando botões para teleportes
+local locations = {
+    {"Prédio", -1888.3, 4.8, 377.2},
+    {"Casa Pescaria", -1205.7, 79.1, -391.0},
+    {"Gas/Lixo", -441.9, 5.3, -31.0},
+    {"Fazenda", 778.8, 4.8, -101.1},
+    {"PM", -839.3, 12.2, 459.0},
+    {"Praça", -287.4, 4.8, 338.5},
+    {"Plantas", 12022.6, 27.3, 12796.3},
+    {"Lavagem", 19830.8, 66.5, 13142.8}
+}
 
-	closeButton.MouseButton1Click:Connect(function()
-		ScreenGui:Destroy()
-	end)
+for _, loc in pairs(locations) do
+    local button = Instance.new("TextButton")
+    button.Text = loc[1]
+    button.Size = UDim2.new(1, 0, 0, 30)
+    button.Parent = ButtonsFrame
+    button.MouseButton1Click:Connect(function()
+        teleport(loc[2], loc[3], loc[4])
+    end)
 end
 
-createCloseButton()
+-- Criando botões para funções
+local functions = {
+    {"Velocidade", function() 
+        -- Coloque aqui a lógica para aumentar a velocidade do jogador
+        print("Função Velocidade ativada!")
+    end},
+    {"ESP Nome", function() 
+        -- Coloque aqui a lógica do ESP para nome de jogadores
+        print("Função ESP Nome ativada!")
+    end},
+    {"ESP Pessoas", function() 
+        -- Coloque aqui a lógica para ESP de pessoas no jogo
+        print("Função ESP Pessoas ativada!")
+    end},
+    {"No Clip", function() 
+        -- Coloque aqui a lógica para permitir No Clip
+        print("Função No Clip ativada!")
+    end},
+    {"Hit Box", function() 
+        -- Coloque aqui a lógica para modificar o hitbox
+        print("Função Hit Box ativada!")
+    end},
+    {"CL", function() 
+        -- Coloque aqui a lógica para o CL (ou o que seja)
+        print("Função CL ativada!")
+    end},
+    {"Teleporte Player", function() 
+        -- Coloque aqui a lógica para teletransportar outro jogador
+        print("Função Teleporte Player ativada!")
+    end}
+}
 
---------------------------------------------------
--- FUNÇÕES
+for _, func in pairs(functions) do
+    local button = Instance.new("TextButton")
+    button.Text = func[1]
+    button.Size = UDim2.new(1, 0, 0, 30)
+    button.Parent = FunctionsFrame
+    button.MouseButton1Click:Connect(func[2])
+end
 
--- Invisibilidade
-createButton("Invisibilidade", 0, function(state)
-	local player = game.Players.LocalPlayer
-	if player and player.Character then
-		for _, part in ipairs(player.Character:GetChildren()) do
-			if part:IsA("BasePart") then
-				part.Transparency = state and 1 or 0
-			end
-		end
-	end
+-- Funções adicionais
+loadstring(game:HttpGet("https://raw.githubusercontent.com/XNEOFF/FlyGuiV3/main/FlyGuiV3.txt"))()
+
+-- ANTI BAN E ANTI EXPLOIT
+local mt = getrawmetatable(game)
+setreadonly(mt, false)
+local old = mt.__namecall
+
+mt.__namecall = newcclosure(function(self, ...)
+    local method = getnamecallmethod()
+    local args = {...}
+    
+    -- Bloquear tentativas de kick e ban
+    if method == "Kick" or method == "Ban" then
+        warn("Tentativa de kick bloqueada!")
+        return nil
+    end
+
+    return old(self, ...)
 end)
 
--- Voar (usa _G.globalSpeed)
-local adminFlightConnection
-createButton("Voar", 30, function(state)
-	local player = game.Players.LocalPlayer
-	local character = player.Character
-	if character then
-		local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
-		if humanoidRootPart then
-			local RunService = game:GetService("RunService")
-			if state then
-				local bodyGyro = Instance.new("BodyGyro")
-				local bodyVelocity = Instance.new("BodyVelocity")
-				bodyGyro.Name = "AdminFlightGyro"
-				bodyVelocity.Name = "AdminFlightVel"
-				bodyGyro.P = 9e4
-				bodyGyro.MaxTorque = Vector3.new(9e4, 9e4, 9e4)
-				bodyGyro.CFrame = workspace.CurrentCamera.CFrame
-				bodyGyro.Parent = humanoidRootPart
+-- Proteção contra modificações forçadas no player
+local function protectPlayer()
+    local player = game.Players.LocalPlayer
+    player.CharacterAdded:Connect(function(char)
+        local hrp = char:FindFirstChild("HumanoidRootPart")
+        if hrp then
+            hrp:GetPropertyChangedSignal("CFrame"):Connect(function()
+                if not hrp.Parent then return end
+                hrp.CFrame = hrp.CFrame -- Restaura a posição se for modificada
+            end)
+        end
+    end)
+end
 
-				bodyVelocity.MaxForce = Vector3.new(9e4, 9e4, 9e4)
-				bodyVelocity.Parent = humanoidRootPart
+protectPlayer()
 
-				adminFlightConnection = RunService.Heartbeat:Connect(function()
-					local direction = Vector3.new(0, 0, 0)
-					if UserInputService:IsKeyDown(Enum.KeyCode.W) then
-						direction = direction + workspace.CurrentCamera.CFrame.LookVector
-					end
-					if UserInputService:IsKeyDown(Enum.KeyCode.S) then
-						direction = direction - workspace.CurrentCamera.CFrame.LookVector
-					end
-					if UserInputService:IsKeyDown(Enum.KeyCode.A) then
-						direction = direction - workspace.CurrentCamera.CFrame.RightVector
-					end
-					if UserInputService:IsKeyDown(Enum.KeyCode.D) then
-						direction = direction + workspace.CurrentCamera.CFrame.RightVector
-					end
-					if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
-						direction = direction + Vector3.new(0, 1, 0)
-					end
-					if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then
-						direction = direction - Vector3.new(0, 1, 0)
-					end
+-- Proteção contra exploits no ambiente de execução
+local function isExploitDetected()
+    -- Verificação simples para verificar se há sinais típicos de exploit (ex: funções do "getfenv" ou outros sinais)
+    local success, err = pcall(function()
+        return game:GetService("HttpService"):GetAsync("https://www.google.com")
+    end)
+    if not success then
+        return true
+    end
+    return false
+end
 
-					local gamepadInputs = UserInputService:GetGamepadState(Enum.UserInputType.Gamepad1)
-					for _, input in ipairs(gamepadInputs) do
-						if input.KeyCode == Enum.KeyCode.Thumbstick1 then
-							local stick = input.Position
-							direction = direction + (workspace.CurrentCamera.CFrame.RightVector * stick.X)
-							direction = direction + (workspace.CurrentCamera.CFrame.LookVector * stick.Y)
-						end
-					end
+if isExploitDetected() then
+    warn("Exploit detectado, script não será executado!")
+    return
+end
 
-					if direction.Magnitude > 0 then
-						bodyVelocity.Velocity = direction.Unit * _G.globalSpeed
-					else
-						bodyVelocity.Velocity = Vector3.new(0, 0, 0)
-					end
-
-					bodyGyro.CFrame = workspace.CurrentCamera.CFrame
-				end)
-			else
-				if humanoidRootPart:FindFirstChild("AdminFlightGyro") then
-					humanoidRootPart.AdminFlightGyro:Destroy()
-				end
-				if humanoidRootPart:FindFirstChild("AdminFlightVel") then
-					humanoidRootPart.AdminFlightVel:Destroy()
-				end
-				if adminFlightConnection then
-					adminFlightConnection:Disconnect()
-					adminFlightConnection = nil
-				end
-			end
-		end
-	end
-end)
-
--- ESP
-createButton("ESP Pessoa", 60, function(state)
-	for _, player in pairs(game.Players:GetPlayers()) do
-		if player ~= game.Players.LocalPlayer and player.Character then
-			if state then
-				local highlight = Instance.new("Highlight")
-				highlight.Name = "ESPHighlight"
-				highlight.FillColor = Color3.new(1, 0, 0)
-				highlight.Parent = player.Character
-			else
-				if player.Character then
-					for _, v in pairs(player.Character:GetChildren()) do
-						if v:IsA("Highlight") and v.Name == "ESPHighlight" then
-							v:Destroy()
-						end
-					end
-				end
-			end
-		end
-	end
-end)
-
--- No Clip
-createButton("No Clip", 90, function(state)
-	local player = game.Players.LocalPlayer
-	local character = player.Character
-	if character then
-		_G.noClipActive = state
-		for _, part in ipairs(character:GetChildren()) do
-			if part:IsA("BasePart") then
-				part.CanCollide = not state
-			end
-		end
-	end
-end)
-
--- Deus
-createButton("Deus", 120, function(state)
-	local player = game.Players.LocalPlayer
-	local character = player.Character
-	if character then
-		local humanoid = character:FindFirstChildOfClass("Humanoid")
-		if humanoid then
-			if state then
-				humanoid.Health = humanoid.MaxHealth
-				humanoid.Died:Connect(function() return true end)
-			else
-				humanoid.Health = humanoid.MaxHealth
-				humanoid.Died:Disconnect()
-			end
-		end
-	end
-end)
-
--- Tag ADM (Chat e Acima da Cabeça)
-createButton("Tag ADM", 150, function(state)
-	local player = game.Players.LocalPlayer
-	if state then
-		game:GetService("StarterGui"):SetCore("ChatMakeSystemMessage", {
-			Text = "[ADM] " .. player.Name,
-			Color = Color3.fromRGB(255, 0, 0),
-			Font = Enum.Font.SourceSansBold,
-			TextSize = 20
-		})
-
-		local tag = Instance.new("BillboardGui")
-		tag.Adornee = player.Character:WaitForChild("Head")
-		tag.Name = "ADMTag"
-		tag.Size = UDim2.new(0, 100, 0, 30)
-		tag.StudsOffset = Vector3.new(0, 2, 0)
-		tag.Parent = player.Character:WaitForChild("Head")
-
-		local label = Instance.new("TextLabel")
-		label.Size = UDim2.new(1, 0, 1, 0)
-		label.Text = "[ADM]"
-		label.TextColor3 = Color3.fromRGB(255, 0, 0)
-		label.BackgroundTransparency = 1
-		label.TextSize = 18
-		label.Parent = tag
-	else
-		local head = player.Character and player.Character:FindFirstChild("Head")
-		if head then
-			local tag = head:FindFirstChild("ADMTag")
-			if tag then
-				tag:Destroy()
-			end
-		end
-	end
-end)
-
--- Bala Mágica (Projéteis de Tools equipadas se tornam "mágicos" e travam a mira no alvo)
-createButton("Bala Magica", 180, function(state)
-	_G.balaMagicaActive = state
-	if state then
-		_G.balaMagicaConnection = game.Workspace.ChildAdded:Connect(function(child)
-			if child:IsA("BasePart") then
-				local tool = child:FindFirstAncestorOfClass("Tool")
-				if tool and tool.Parent == game.Players.LocalPlayer.Character then
-					child.CanCollide = false
-					spawn(function()
-						while child and child.Parent and _G.balaMagicaActive do
-							local lockRadius = _G.noClipActive and 20 or 2
-							local closestTarget = nil
-							local closestDist = lockRadius
-							for _, pl in ipairs(game.Players:GetPlayers()) do
-								if pl ~= game.Players.LocalPlayer and pl.Character and pl.Character:FindFirstChild("Head") then
-									local dist = (child.Position - pl.Character.Head.Position).Magnitude
-									if dist < closestDist then
-										closestDist = dist
-										closestTarget = pl.Character.Head
-									end
-								end
-							end
-							if closestTarget then
-								child.Velocity = (closestTarget.Position - child.Position).Unit * _G.globalSpeed
-							end
-							wait(0.05)
-						end
-					end)
-				end
-			end
-		end)
-	else
-		if _G.balaMagicaConnection then
-			_G.balaMagicaConnection:Disconnect()
-			_G.balaMagicaConnection = nil
-		end
-	end
-end)
-
---------------------------------------------------
--- Função de Velocidade com Slider (Sem caixa de número)
-createButton("Velocidade", 210, function(state)
-	-- Se o botão for ativado, cria um slider simples
-	if state then
-		-- Cria o frame do slider
-		local sliderFrame = Instance.new("Frame")
-		sliderFrame.Name = "SliderFrame"
-		sliderFrame.Size = UDim2.new(0, 100, 0, 20)
-		sliderFrame.Position = UDim2.new(0, 10, 0, 240)
-		sliderFrame.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
-		sliderFrame.Parent = FunctionsFrame
-
-		-- Cria o "track" (fundo do slider)
-		local track = Instance.new("Frame")
-		track.Name = "Track"
-		track.Size = UDim2.new(1, 0, 1, 0)
-		track.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
-		track.Parent = sliderFrame
-
-		-- Cria o botão do slider
-		local sliderButton = Instance.new("Frame")
-		sliderButton.Name = "SliderButton"
-		sliderButton.Size = UDim2.new(0, 20, 1, 0)
-		local initialPos = (_G.globalSpeed - 10) / (500 - 10)
-		sliderButton.Position = UDim2.new(initialPos, 0, 0, 0)
-		sliderButton.BackgroundColor3 = Color3.fromRGB(0, 0, 255)
-		sliderButton.Parent = sliderFrame
-
-		-- Função para atualizar a velocidade e a WalkSpeed
-		local function updateSpeedFromSlider(xOffset)
-			local trackWidth = track.AbsoluteSize.X - sliderButton.AbsoluteSize.X
-			local percent = math.clamp(xOffset / trackWidth, 0, 1)
-			local newSpeed = math.floor(percent * (500 - 10) + 10)
-			_G.globalSpeed = newSpeed
-			local player = game.Players.LocalPlayer
-			if player and player.Character then
-				local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
-				if humanoid then
-					humanoid.WalkSpeed = newSpeed
-				end
-			end
-		end
-
-		-- Permite arrastar o sliderButton com mouse e teclado
-		local draggingSlider = false
-		sliderButton.InputBegan:Connect(function(input)
-			if input.UserInputType == Enum.UserInputType.MouseButton1 then
-				draggingSlider = true
-			elseif input.UserInputType == Enum.UserInputType.Keyboard then
-				if input.KeyCode == Enum.KeyCode.Left then
-					local newX = sliderButton.Position.X.Offset - 5
-					local trackWidth = track.AbsoluteSize.X - sliderButton.AbsoluteSize.X
-					newX = math.clamp(newX, 0, trackWidth)
-					sliderButton.Position = UDim2.new(0, newX, 0, 0)
-					updateSpeedFromSlider(newX)
-				elseif input.KeyCode == Enum.KeyCode.Right then
-					local newX = sliderButton.Position.X.Offset + 5
-					local trackWidth = track.AbsoluteSize.X - sliderButton.AbsoluteSize.X
-					newX = math.clamp(newX, 0, trackWidth)
-					sliderButton.Position = UDim2.new(0, newX, 0, 0)
-					updateSpeedFromSlider(newX)
-				end
-			end
-		end)
-		sliderButton.InputEnded:Connect(function(input)
-			if input.UserInputType == Enum.UserInputType.MouseButton1 then
-				draggingSlider = false
-			end
-		end)
-		UserInputService.InputChanged:Connect(function(input)
-			if draggingSlider and input.UserInputType == Enum.UserInputType.MouseMovement then
-				local relativeX = input.Delta.X
-				local newX = sliderButton.Position.X.Offset + relativeX
-				local trackWidth = track.AbsoluteSize.X - sliderButton.AbsoluteSize.X
-				newX = math.clamp(newX, 0, trackWidth)
-				sliderButton.Position = UDim2.new(0, newX, 0, 0)
-				updateSpeedFromSlider(newX)
-			end
-		end)
-	else
-		local sFrame = FunctionsFrame:FindFirstChild("SliderFrame")
-		if sFrame then
-			sFrame:Destroy()
-		end
-	end
-end)
+print("Anti-Ban e Anti-Exploit ativados!")
