@@ -49,7 +49,16 @@ FunctionsTitle.BackgroundTransparency = 1
 local function teleport(x, y, z)
     local player = game.Players.LocalPlayer
     if player and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-        player.Character.HumanoidRootPart.CFrame = CFrame.new(x, y, z)
+        local hrp = player.Character.HumanoidRootPart
+        local targetPos = CFrame.new(x, y, z)
+        hrp.CFrame = targetPos
+
+        -- Verificando se o teleporte foi bem-sucedido
+        if hrp.Position == targetPos.Position then
+            print("Teleporte realizado com sucesso!")
+        else
+            warn("Falha no teleporte!")
+        end
     end
 end
 
